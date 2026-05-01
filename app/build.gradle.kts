@@ -43,10 +43,6 @@ android {
         buildConfig = true
     }
 
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -103,4 +99,9 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
 }
