@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">FlightMaximizer</string>
+
+    <!-- Navigation labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_routes">Routes</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Button labels -->
+    <string name="btn_scan_now">Scan Now</string>
+    <string name="btn_add_route">Add Route</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_delete">Delete</string>
+
+    <!-- Field labels -->
+    <string name="lbl_sources">Sources</string>
+    <string name="lbl_destinations">Destinations</string>
+    <string name="lbl_trip_type">Trip Type</string>
+    <string name="lbl_date_mode">Date Mode</string>
+    <string name="lbl_interval">Interval</string>
+
+    <!-- Trip type options -->
+    <string name="lbl_one_way">One Way</string>
+    <string name="lbl_round_trip">Round Trip</string>
+    <string name="lbl_multi_city">Multi-City</string>
+
+    <!-- Date mode options -->
+    <string name="lbl_fixed">Fixed</string>
+    <string name="lbl_flexible">Flexible</string>
+    <string name="lbl_whenever">Whenever</string>
+
+    <!-- Notification channel names and descriptions -->
+    <string name="notif_channel_scan_name">Scan Results</string>
+    <string name="notif_channel_scan_desc">Notifications for new flight scan results and price alerts</string>
+    <string name="notif_channel_error_name">Scan Errors</string>
+    <string name="notif_channel_error_desc">Notifications for errors that occur during flight scanning</string>
+
+    <!-- Notification titles -->
+    <string name="notif_title_no_results">No Results Found</string>
+
+    <!-- Price trend labels -->
+    <string name="lbl_price_rising">Price Rising</string>
+    <string name="lbl_price_falling">Price Falling</string>
+    <string name="lbl_price_stable">Price Stable</string>
+
+    <!-- Recommendation labels -->
+    <string name="lbl_buy_now">Buy Now</string>
+    <string name="lbl_wait">Wait</string>
+
+    <!-- Notification string resources -->
+    <string name="notification_channel_results">Scan Results</string>
+    <string name="notification_channel_errors">Scan Errors</string>
+    <string name="notification_action_book">Open Booking</string>
+    <string name="notification_action_view">View Results</string>
+
+    <!-- Source labels -->
+    <string name="lbl_source_google">Google Flights</string>
+    <string name="lbl_source_kiwi">Kiwi.com</string>
+</resources>
