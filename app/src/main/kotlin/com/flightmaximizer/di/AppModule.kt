@@ -11,11 +11,12 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import okhttp3.JavaNetCookieJar
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import java.net.CookieManager
-import java.net.CookiePolicy
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -33,14 +34,24 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
-        val cookieManager = CookieManager().apply { setCookiePolicy(CookiePolicy.ACCEPT_ALL) }
+        // JavaNetCookieJar lives in okhttp-urlconnection (not the main artifact).
+        // An in-memory CookieJar keyed by host is sufficient for scraping sessions.
+        val cookieStore = ConcurrentHashMap<String, MutableList<Cookie>>()
+        val cookieJar = object : CookieJar {
+            override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+                cookieStore.getOrPut(url.host) { mutableListOf() }.addAll(cookies)
+            }
+            override fun loadForRequest(url: HttpUrl): List<Cookie> =
+                cookieStore[url.host]?.filter { it.matches(url) } ?: emptyList()
+        }
+
         return OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .followRedirects(true)
             .followSslRedirects(true)
-            .cookieJar(JavaNetCookieJar(cookieManager))
+            .cookieJar(cookieJar)
             .addInterceptor(RetryInterceptor(maxRetries = 3))
             .apply {
                 if (BuildConfig.DEBUG) {
