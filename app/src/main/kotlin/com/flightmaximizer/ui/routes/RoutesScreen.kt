@@ -39,7 +39,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -210,6 +209,9 @@ private fun RouteEditSheet(
     var dateMode by remember { mutableStateOf(existingRoute?.dateMode ?: DateMode.WHENEVER) }
     var flexDays by remember { mutableStateOf(existingRoute?.flexDays ?: 7) }
     var wheneverMonths by remember { mutableStateOf(existingRoute?.wheneverMonths ?: 3) }
+    var departDateText by remember { mutableStateOf(existingRoute?.departDate?.toString() ?: "") }
+    var returnDateText by remember { mutableStateOf(existingRoute?.returnDate?.toString() ?: "") }
+    var departDateError by remember { mutableStateOf(false) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -295,7 +297,28 @@ private fun RouteEditSheet(
                         steps = 4
                     )
                 }
-                DateMode.FIXED -> { /* No extra controls needed for fixed */ }
+                DateMode.FIXED -> {
+                    OutlinedTextField(
+                        value = departDateText,
+                        onValueChange = { departDateText = it; departDateError = false },
+                        label = { Text("Depart date (YYYY-MM-DD)") },
+                        placeholder = { Text(LocalDate.now().plusDays(30).toString()) },
+                        isError = departDateError,
+                        supportingText = if (departDateError) {{ Text("Invalid date — use YYYY-MM-DD") }} else null,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (tripType == TripType.ROUND_TRIP) {
+                        OutlinedTextField(
+                            value = returnDateText,
+                            onValueChange = { returnDateText = it },
+                            label = { Text("Return date (YYYY-MM-DD, optional)") },
+                            placeholder = { Text(LocalDate.now().plusDays(37).toString()) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
 
             // Preview
@@ -331,10 +354,18 @@ private fun RouteEditSheet(
                             .map { it.trim().uppercase() }
                             .filter { it.isNotBlank() }
                         if (parsedOrigins.isEmpty() || parsedDests.isEmpty()) return@Button
+                        val departDate = if (dateMode == DateMode.FIXED && departDateText.isNotBlank()) {
+                            runCatching { LocalDate.parse(departDateText.trim()) }.getOrElse {
+                                departDateError = true; return@Button
+                            }
+                        } else null
+                        val returnDate = if (dateMode == DateMode.FIXED && returnDateText.isNotBlank()) {
+                            runCatching { LocalDate.parse(returnDateText.trim()) }.getOrNull()
+                        } else null
                         onSave(
                             name, parsedOrigins, parsedDests,
                             tripType, dateMode,
-                            null, null,
+                            departDate, returnDate,
                             flexDays, wheneverMonths
                         )
                     },

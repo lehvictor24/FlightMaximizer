@@ -63,6 +63,11 @@ class WorkManagerScheduler @Inject constructor(
     }
 
     fun getWorkInfo(): Flow<WorkInfo?> =
-        workManager.getWorkInfosForUniqueWorkFlow(FlightScanWorker.WORK_NAME)
-            .map { it.firstOrNull() }
+        // Observe by tag so both the periodic work and one-shot "Scan Now" requests are visible.
+        // Prefer a currently-running entry; fall back to whatever is most recent.
+        workManager.getWorkInfosByTagFlow(FlightScanWorker.WORK_TAG)
+            .map { infos ->
+                infos.firstOrNull { it.state == WorkInfo.State.RUNNING }
+                    ?: infos.firstOrNull()
+            }
 }
