@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +29,7 @@ import java.time.format.DateTimeFormatter
 fun ScanStatusBanner(
     workInfo: WorkInfo?,
     lastScanMs: Long?,
+    lastScanResultCount: Int?,
     nextScanMs: Long?,
     modifier: Modifier = Modifier
 ) {
@@ -42,29 +44,43 @@ fun ScanStatusBanner(
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
             if (isRunning) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Scanning flights...", style = MaterialTheme.typography.bodyMedium)
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Scanning flights…", style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val noResults = lastScanMs != null && lastScanResultCount == 0
                     Icon(
-                        Icons.Filled.CheckCircle,
+                        if (noResults) Icons.Filled.Warning else Icons.Filled.CheckCircle,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = if (noResults) MaterialTheme.colorScheme.error
+                               else MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    val lastText = lastScanMs?.let { "Last scan: ${formatTime(it)}" } ?: "No scan yet"
-                    Text(lastText, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.width(8.dp))
+                    val label = when {
+                        lastScanMs == null -> "No scan yet"
+                        lastScanResultCount == 0 ->
+                            "Last scan ${formatTime(lastScanMs)} — no prices found"
+                        lastScanResultCount != null ->
+                            "Last scan ${formatTime(lastScanMs)} · $lastScanResultCount result${if (lastScanResultCount == 1) "" else "s"}"
+                        else -> "Last scan: ${formatTime(lastScanMs)}"
+                    }
+                    Text(label, style = MaterialTheme.typography.bodyMedium)
+                }
+                if (lastScanMs != null && lastScanResultCount == 0) {
+                    Text(
+                        "Google Flights requires JavaScript — add a Kiwi.com API key in Settings to get real prices.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
             }
             nextScanMs?.let {
                 Text(
-                    text = "Next scan: ${formatTime(it)}",
+                    "Next scan: ${formatTime(it)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -73,7 +89,6 @@ fun ScanStatusBanner(
     }
 }
 
-private fun formatTime(epochMs: Long): String {
-    val formatter = DateTimeFormatter.ofPattern("h:mm a").withZone(ZoneId.systemDefault())
-    return formatter.format(Instant.ofEpochMilli(epochMs))
-}
+private fun formatTime(epochMs: Long): String =
+    DateTimeFormatter.ofPattern("h:mm a").withZone(ZoneId.systemDefault())
+        .format(Instant.ofEpochMilli(epochMs))

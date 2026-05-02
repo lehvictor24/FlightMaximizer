@@ -2,7 +2,6 @@ package com.flightmaximizer.data.remote.google
 
 import com.flightmaximizer.data.remote.model.FlightOffer
 import com.flightmaximizer.data.remote.model.FlightSearchParams
-import com.flightmaximizer.domain.model.TripType
 import org.jsoup.Jsoup
 import timber.log.Timber
 import java.time.LocalDate
@@ -12,7 +11,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GoogleFlightsParser @Inject constructor() {
+class GoogleFlightsParser @Inject constructor(
+    private val urlBuilder: GoogleFlightsUrlBuilder
+) {
 
     companion object {
         private const val SOURCE = "google_flights"
@@ -160,13 +161,8 @@ class GoogleFlightsParser @Inject constructor() {
         )
     }
 
-    private fun buildBookingUrl(params: FlightSearchParams): String {
-        return when (params.tripType) {
-            TripType.ONE_WAY -> "https://www.google.com/travel/flights#flt=${params.origin}.${params.destination}.${params.departDate};c:${params.currency};e:1;sd:1;t:f"
-            TripType.ROUND_TRIP -> "https://www.google.com/travel/flights#flt=${params.origin}.${params.destination}.${params.departDate}*${params.destination}.${params.origin}.${params.returnDate ?: params.departDate.plusDays(7)};c:${params.currency};e:1;sd:1;t:r"
-            TripType.MULTI_CITY -> "https://www.google.com/travel/flights"
-        }
-    }
+    private fun buildBookingUrl(params: FlightSearchParams): String =
+        urlBuilder.buildBookingUrl(params)
 
     private fun extractAirline(label: String): String? {
         val airlines = listOf(

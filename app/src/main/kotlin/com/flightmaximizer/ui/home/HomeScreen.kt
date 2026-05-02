@@ -65,11 +65,15 @@ fun HomeScreen(
             ScanStatusBanner(
                 workInfo = state.workInfo,
                 lastScanMs = state.lastScanMs,
+                lastScanResultCount = state.lastScanResultCount,
                 nextScanMs = null
             )
 
             if (state.cheapestPerRoute.isEmpty()) {
-                HomeEmptyState(modifier = Modifier.fillMaxSize())
+                HomeEmptyState(
+                    hasScanned = state.lastScanMs != null,
+                    modifier = Modifier.fillMaxSize()
+                )
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -86,7 +90,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeEmptyState(modifier: Modifier = Modifier) {
+private fun HomeEmptyState(hasScanned: Boolean, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.Center,
@@ -100,7 +104,10 @@ private fun HomeEmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "No results yet.\nAdd a route and start scanning.",
+            text = if (hasScanned)
+                "No prices found yet.\nGoogle Flights needs JavaScript to load results.\nAdd a Kiwi.com API key in Settings for live prices."
+            else
+                "No results yet.\nAdd a route and tap Scan Now.",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant

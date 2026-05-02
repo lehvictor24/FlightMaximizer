@@ -9,7 +9,6 @@ import javax.inject.Singleton
 
 @Singleton
 class GoogleFlightsUrlBuilder @Inject constructor() {
-    private val base = "https://www.google.com/travel/flights"
 
     fun build(params: FlightSearchParams): String = when (params.tripType) {
         TripType.ONE_WAY -> buildOneWay(params.origin, params.destination, params.departDate, params.currency)
@@ -21,21 +20,40 @@ class GoogleFlightsUrlBuilder @Inject constructor() {
         TripType.MULTI_CITY -> buildMultiCity(params.legs, params.currency)
     }
 
+    // Query-parameter form — the server receives these and may include data in the
+    // initial HTML response, unlike the hash-fragment (#flt=…) form which is
+    // stripped by the HTTP client before the request is sent.
     fun buildOneWay(origin: String, dest: String, date: LocalDate, currency: String = "USD"): String =
-        "$base#flt=$origin.$dest.${date};c:$currency;e:1;sd:1;t:f"
+        "https://www.google.com/travel/flights/search" +
+            "?tfs=CBwQARowEgoyMDI1LTA2LTAxagcIARID${origin}cgcIARID${dest}" +
+            "&curr=$currency&gl=us&hl=en" +
+            "&q=${origin}+to+${dest}+on+${date}"
 
     fun buildRoundTrip(origin: String, dest: String, depart: LocalDate, ret: LocalDate, currency: String = "USD"): String =
-        "$base#flt=$origin.$dest.$depart*$dest.$origin.$ret;c:$currency;e:1;sd:1;t:r"
+        "https://www.google.com/travel/flights/search" +
+            "?curr=$currency&gl=us&hl=en" +
+            "&q=${origin}+to+${dest}+from+${depart}+return+${ret}"
 
     fun buildMultiCity(legs: List<MultiCityLegParam>, currency: String = "USD"): String {
-        val legStr = legs.joinToString("*") { "${it.origin}.${it.destination}.${it.departDate}" }
-        return "$base#flt=$legStr;c:$currency;e:1;sd:1;t:m"
+        val q = legs.joinToString("+and+") { "${it.origin}+to+${it.destination}+on+${it.departDate}" }
+        return "https://www.google.com/travel/flights/search?curr=$currency&gl=us&hl=en&q=$q"
     }
 
-    /**
-     * Calendar/price-graph URL for flexible and "whenever" modes.
-     * Uses Google Flights' month calendar view (d:m) with optional min/max stay.
-     */
+    // Booking deep-link (opened in the browser from a notification or card tap).
+    // Uses the hash fragment form which is correct for browser navigation — the
+    // browser JS client reads it. This is separate from the scraping URL.
+    fun buildBookingUrl(params: FlightSearchParams): String = when (params.tripType) {
+        TripType.ONE_WAY ->
+            "https://www.google.com/travel/flights#flt=${params.origin}.${params.destination}.${params.departDate}" +
+                ";c:${params.currency};e:1;sd:1;t:f"
+        TripType.ROUND_TRIP -> {
+            val ret = params.returnDate ?: params.departDate.plusDays(7)
+            "https://www.google.com/travel/flights#flt=${params.origin}.${params.destination}.${params.departDate}" +
+                "*${params.destination}.${params.origin}.${ret};c:${params.currency};e:1;sd:1;t:r"
+        }
+        TripType.MULTI_CITY -> "https://www.google.com/travel/flights"
+    }
+
     fun buildCalendarView(
         origin: String,
         dest: String,
@@ -50,18 +68,14 @@ class GoogleFlightsUrlBuilder @Inject constructor() {
             if (minNights != null) append(";li:$minNights")
             if (maxNights != null) append(";lx:$maxNights")
         }
-        return "$base#flt=$origin.$dest.$dateStr;c:$currency;e:1;sd:1;t:f$stayParams;d:m"
+        return "https://www.google.com/travel/flights#flt=$origin.$dest.$dateStr;c:$currency;e:1;sd:1;t:f$stayParams;d:m"
     }
 
-    /**
-     * Price matrix URL (departure × return grid) for flexible round-trip.
-     * vm:p activates the grid view showing different depart/return date combos.
-     */
     fun buildPriceMatrix(
         origin: String,
         dest: String,
         depart: LocalDate,
         ret: LocalDate,
         currency: String = "USD"
-    ): String = "$base#flt=$origin.$dest.$depart*$dest.$origin.$ret;c:$currency;e:1;sd:1;t:r;vm:p"
+    ): String = "https://www.google.com/travel/flights#flt=$origin.$dest.$depart*$dest.$origin.$ret;c:$currency;e:1;sd:1;t:r;vm:p"
 }

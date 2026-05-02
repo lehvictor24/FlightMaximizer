@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.flightmaximizer.data.local.datastore.AppPreferences
 import com.flightmaximizer.data.remote.DataSourceException
 import com.flightmaximizer.data.remote.model.FlightSearchParams
@@ -94,7 +95,12 @@ class FlightScanWorker @AssistedInject constructor(
         flightRepository.cleanOldData(maxHistoryDays)
 
         Timber.d("FlightScanWorker complete: $totalFound results found")
-        return Result.success()
+        return Result.success(
+            workDataOf(
+                "last_scan_ms" to System.currentTimeMillis(),
+                "results_count" to totalFound
+            )
+        )
     }
 
     private fun expandDates(route: Route, origin: String, dest: String): List<FlightSearchParams> {

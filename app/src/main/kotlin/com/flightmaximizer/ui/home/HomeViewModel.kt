@@ -17,6 +17,7 @@ data class HomeUiState(
     val cheapestPerRoute: List<FlightResult> = emptyList(),
     val workInfo: WorkInfo? = null,
     val lastScanMs: Long? = null,
+    val lastScanResultCount: Int? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -31,10 +32,12 @@ class HomeViewModel @Inject constructor(
         getCheapestFlights(),
         scheduler.getWorkInfo()
     ) { results, workInfo ->
+        val output = workInfo?.outputData
         HomeUiState(
             cheapestPerRoute = results,
             workInfo = workInfo,
-            lastScanMs = workInfo?.outputData?.getLong("last_scan_ms", 0L)?.takeIf { it > 0 }
+            lastScanMs = output?.getLong("last_scan_ms", 0L)?.takeIf { it > 0L },
+            lastScanResultCount = output?.getInt("results_count", -1)?.takeIf { it >= 0 }
         )
     }.stateIn(
         viewModelScope,
