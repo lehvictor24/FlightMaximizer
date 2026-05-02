@@ -3,13 +3,10 @@
     <!--
         Minimal window theme for a pure-Compose app.
         All Material3 styling is applied via FlightMaximizerTheme (Kotlin/Compose).
-        Theme.Material3.DayNight.NoActionBar requires com.google.android.material which
-        is not a direct dependency; android:Theme.Material.Light.NoTitleBar is a
-        built-in system theme available from API 21+ (minSdk 26).
+        android:Theme.Light.NoTitleBar is a base-framework theme (API 1+) that
+        requires no library dependency and is always present in the SDK.
     -->
-    <style name="Theme.FlightMaximizer" parent="android:Theme.Material.Light.NoTitleBar">
+    <style name="Theme.FlightMaximizer" parent="android:Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 </resources>
